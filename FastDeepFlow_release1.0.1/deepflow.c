@@ -6,6 +6,7 @@
 #include "opticalflow.h"
 #include "io.h"
 
+
 void usage(){
     printf("usage:\n");
     printf("./deepflow image1 image2 outputfile [options] \n");

@@ -1,6 +1,8 @@
 #ifndef __IMAGE_H_
 #define __IMAGE_H_
-
+#ifndef PNG_SKIP_SETJMP_CHECK
+#define PNG_SKIP_SETJMP_CHECK
+#endif
 #include <stdio.h>
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
