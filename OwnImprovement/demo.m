@@ -9,10 +9,10 @@ I2 = im2double(imread('car2.jpg'));
 % construct pyramid
 [h,w,~] = size(I1);
 width = min(h,w);
-
+winSize = 5;
 minWidth = 20;
 ratio = 0.75;
-PYRE_NO = floor(log(minWidth/width)/log(ratio));
+PYRE_NO = log(minWidth/width)/log(ratio);
 
 baseSigma = 1/ratio-1;
 n=round(log(0.25)/log(ratio));
@@ -31,7 +31,6 @@ for i = 2:PYRE_NO
        B = imfilter( I2, G, 'replicate' );
        Apyre{i} = imresize(A,ratio^(i-1));
        Bpyre{i} = imresize(B,ratio^(i-1));
-       
     else
        G = fspecial('gaussian',round(nSigma*3),nSigma);
        A = imfilter( Apyre{i-1-n}, G, 'replicate' );
@@ -43,6 +42,7 @@ for i = 2:PYRE_NO
        Bpyre{i} = imresize(B,rate);
     end
 end
+
 for i = 1:PYRE_NO-1
    Ratiopyre{i} = min(size(Apyre{i},1),size(Apyre{i},2))/min(size(Apyre{i+1},1),size(Apyre{i+1},2)); 
 end
@@ -114,10 +114,6 @@ for p = PYRE_NO:-1:1
     figure;imshow(B);
     pause;
 end
-
-u = imresize(u,[size(Apyre{p},1),size(Apyre{p},2)],'bilinear')*Ratiopyre{1};
-v = imresize(v,[size(Apyre{p},1),size(Apyre{p},2)],'bilinear')*Ratiopyre{1};
-
 Ir = imWarp(u,v,B);
 
 % output gif

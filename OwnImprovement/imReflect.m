@@ -1,7 +1,6 @@
 function [ Io ] = imReflect( I, bordSize )
 
 %bordSize : number of reflected pixels from each side of the image
-
 [h,w,c] = size(I);
 
 
