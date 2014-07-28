@@ -1,0 +1,44 @@
+Pyramid level: 11
+Pyramid no: 11, Iteration no: 1
+Pyramid no: 11, Iteration no: 2
+Pyramid no: 11, Iteration no: 3
+Pyramid level: 10
+Pyramid no: 10, Iteration no: 1
+Pyramid no: 10, Iteration no: 2
+Pyramid no: 10, Iteration no: 3
+Pyramid level: 9
+Pyramid no: 9, Iteration no: 1
+Pyramid no: 9, Iteration no: 2
+Pyramid no: 9, Iteration no: 3
+Pyramid level: 8
+Pyramid no: 8, Iteration no: 1
+Pyramid no: 8, Iteration no: 2
+Pyramid no: 8, Iteration no: 3
+Pyramid level: 7
+Pyramid no: 7, Iteration no: 1
+Pyramid no: 7, Iteration no: 2
+Pyramid no: 7, Iteration no: 3
+Pyramid level: 6
+Pyramid no: 6, Iteration no: 1
+Pyramid no: 6, Iteration no: 2
+Pyramid no: 6, Iteration no: 3
+Pyramid level: 5
+Pyramid no: 5, Iteration no: 1
+Pyramid no: 5, Iteration no: 2
+Pyramid no: 5, Iteration no: 3
+Pyramid level: 4
+Pyramid no: 4, Iteration no: 1
+Pyramid no: 4, Iteration no: 2
+Pyramid no: 4, Iteration no: 3
+Pyramid level: 3
+Pyramid no: 3, Iteration no: 1
+Pyramid no: 3, Iteration no: 2
+Pyramid no: 3, Iteration no: 3
+Pyramid level: 2
+Pyramid no: 2, Iteration no: 1
+Pyramid no: 2, Iteration no: 2
+Pyramid no: 2, Iteration no: 3
+Pyramid level: 1
+Pyramid no: 1, Iteration no: 1
+Pyramid no: 1, Iteration no: 2
+Pyramid no: 1, Iteration no: 3
