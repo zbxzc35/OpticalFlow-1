@@ -1,4 +1,3 @@
-%
 warning('off'); %#ok<WNOFF>
 
 %read image
@@ -6,12 +5,13 @@ I1 = im2double(imread('car1.jpg'));
 I2 = im2double(imread('car2.jpg'));
 
 
-% construct pyramid
+%construct pyramid
 [h,w,~] = size(I1);
 width = min(h,w);
 minWidth = 50;
 ratio = 0.5;
 PYRE_NO = ceil(log(minWidth/width)/log(ratio));
+
 
 baseSigma = 1/ratio-1;
 n=round(log(0.25)/log(ratio));
@@ -42,20 +42,20 @@ for i = 2:PYRE_NO
     end
 end
 
-for i = 1:PYRE_NO-1
-   Ratiopyre{i} = min(size(Apyre{i},1),size(Apyre{i},2))/min(size(Apyre{i+1},1),size(Apyre{i+1},2)); 
+for i = PYRE_NO:-1:2
+   Ratiopyre{i} = min(size(Apyre{i-1},1),size(Apyre{i-1},2))/min(size(Apyre{i},1),size(Apyre{i},2)); 
 end
-
+Ratiopyre{1} = 1;
 
 % windows search size
 winSize = 5;
 ITER_NO = 3;
 halfWindow = (winSize-1)/2;
 accThreshold = 0.0005;
-fp = fopen('LKLog.txt','wt');
+
 % estimate flow field
 for p = PYRE_NO:-1:1
-    fprintf(fp,'Pyramid level: %d\n',p);
+    fprintf('Pyramid level: %d\n',p);
     A_p = imReflect( Apyre{p}, halfWindow);
     A_p_Desaturate = imDesaturate(A_p);
     B_p = Bpyre{p};
@@ -74,23 +74,24 @@ for p = PYRE_NO:-1:1
         %correct u and v
         A_p_conv = imReflect( Apyre{p}, 2*halfWindow);
         B_p_conv = imReflect(imWarp( u, v, Bpyre{p} ), halfWindow);
-        for i = 1+2*halfWindow:size(A_p_conv,1)-2*halfWindow
-            for j = 1+2*halfWindow:size(A_p_conv,1)-2*halfWindow
+        for i = 1:size(Apyre{p},1)
+            for j = 1:size(Apyre{p},2)
+                
                 %perform convoluation and search the minimal
-                template = B_p_conv(i-halfWindow:i+halfWindow,j-halfWindow:j+halfWindow,:);
-                matching = A_p_conv(i-2*halfWindow:i+2*halfWindow,j-2*halfWindow:j+2*halfWindow,:);
-                C = conv2(matching(:,:,1),template(:,:,1),'same')...
-                    +conv2(matching(:,:,2),template(:,:,2),'same')...
-                    +conv2(matching(:,:,3),template(:,:,3),'same');
-                [mini,minj] = find(C==min(C(:)));
-                u(i,j) = mini-2*halfWindow;
-                v(i,j) = minj-2*halfWindow;
+                template = B_p_conv(i:i+halfWindow*2,j:j+halfWindow*2,:);
+                matching = A_p_conv(i:i+2*halfWindow*2,j:j+2*halfWindow*2,:);
+                C = conv2(matching(:,:,1),template(:,:,1),'full')...
+                    +conv2(matching(:,:,2),template(:,:,2),'full')...
+                    +conv2(matching(:,:,3),template(:,:,3),'full');
+                [maxi,maxj] = find(C==max(C(:)),1,'first');
+                u(i,j) = maxi-3*halfWindow;
+                v(i,j) = maxj-3*halfWindow;
             end
         end
     end
     
     for k = 1:ITER_NO
-        fprintf(fp,'Pyramid no: %d, Iteration no: %d\n',p,k);
+        fprintf('Pyramid no: %d, Iteration no: %d\n',p,k);
         
         %search the minimal correlation for each u and v
         B = imWarp( u, v, Bpyre{p} );
@@ -106,7 +107,7 @@ for p = PYRE_NO:-1:1
         v = v + vs;
         
         if(sum(sum(us.^2+vs.^2))/size(us,1)*size(us,2)<accThreshold)
-            fprintf(fp,'Pyramid no: %d, Iteration no: %d\n break',p,k);
+            fprintf('Pyramid no: %d, Iteration no: %d\n break',p,k);
             break;
         end 
     end
