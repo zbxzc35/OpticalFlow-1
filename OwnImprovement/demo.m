@@ -9,7 +9,6 @@ I2 = im2double(imread('car2.jpg'));
 % construct pyramid
 [h,w,~] = size(I1);
 width = min(h,w);
-winSize = 5;
 minWidth = 20;
 ratio = 0.75;
 PYRE_NO = log(minWidth/width)/log(ratio);
