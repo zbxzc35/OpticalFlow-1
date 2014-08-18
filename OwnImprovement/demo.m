@@ -53,6 +53,7 @@ ITER_NO = 3;
 halfWindow = (winSize-1)/2;
 accThreshold = 0.0005;
 
+
 % estimate flow field
 for p = PYRE_NO:-1:1
     fprintf('Pyramid level: %d\n',p);
