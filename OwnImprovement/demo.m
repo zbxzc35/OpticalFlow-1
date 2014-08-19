@@ -24,28 +24,65 @@ Bpyre{1} = I2;
 Ratiopyre = cell(PYRE_NO,1);
 for i = 2:PYRE_NO
     if(i<=n+1)
-       sigma = baseSigma*(i-1);
-       G = fspecial('gaussian',round(sigma*3),sigma);
-       A = imfilter( I1, G, 'replicate' );
-       B = imfilter( I2, G, 'replicate' );
-       Apyre{i} = imresize(A,ratio^(i-1));
-       Bpyre{i} = imresize(B,ratio^(i-1));
+        sigma = baseSigma*(i-1);
+        G = fspecial('gaussian',round(sigma*3),sigma);
+        A = imfilter( I1, G, 'replicate' );
+        B = imfilter( I2, G, 'replicate' );
+        Apyre{i} = imresize(A,ratio^(i-1));
+        Bpyre{i} = imresize(B,ratio^(i-1));
     else
-       G = fspecial('gaussian',round(nSigma*3),nSigma);
-       A = imfilter( Apyre{i-1-n}, G, 'replicate' );
-       B = imfilter( Bpyre{i-1-n}, G, 'replicate' );
-       [nh,nw,~] = size(A);
-       nwidth = min(nh,nw);
-       rate=(ratio^(i-1))*width/nwidth;
-       Apyre{i} = imresize(A,rate);
-       Bpyre{i} = imresize(B,rate);
+        G = fspecial('gaussian',round(nSigma*3),nSigma);
+        A = imfilter( Apyre{i-1-n}, G, 'replicate' );
+        B = imfilter( Bpyre{i-1-n}, G, 'replicate' );
+        [nh,nw,~] = size(A);
+        nwidth = min(nh,nw);
+        rate=(ratio^(i-1))*width/nwidth;
+        Apyre{i} = imresize(A,rate);
+        Bpyre{i} = imresize(B,rate);
     end
 end
 
 for i = PYRE_NO:-1:2
-   Ratiopyre{i} = min(size(Apyre{i-1},1),size(Apyre{i-1},2))/min(size(Apyre{i},1),size(Apyre{i},2)); 
+    Ratiopyre{i} = min(size(Apyre{i-1},1),size(Apyre{i-1},2))/min(size(Apyre{i},1),size(Apyre{i},2));
 end
 Ratiopyre{1} = 1;
+
+%obtain the region of using convolution
+ImageDifference = cell(PYRE_NO,1);
+for i = 1:PYRE_NO
+    ImageDifference{i} = rgb2gray(imsubtract(Apyre{i},Bpyre{i}));
+end
+
+addpath('./Gb_Code_Oct2012');
+ImageEdgeSeg = cell(PYRE_NO,1);
+for i = 1:PYRE_NO
+    ImageEdgeSeg{i} = Gb_CSG( Bpyre{i} );
+end
+
+ImageEdgeCanny = cell(PYRE_NO,1);
+for i = 1:PYRE_NO
+    ImageEdgeCanny{i} = edge(rgb2gray(Bpyre{i}),'canny',0.5);
+end
+
+ImageEdgeGB = cell(PYRE_NO,1);
+[nRows, nCols, aux] = size(I2);
+imDiag = norm([nRows, nCols]);
+wC = round(0.016*imDiag);
+alpha_AB = 1.9;
+for i = 1:PYRE_NO
+    ImageEdgeCanny{i} = GbC_lambda( Bpyre{i}, wC, alpha_AB);
+end
+
+%search candidate for each layer
+CandiateMask = cell(PYRE_NO,1);
+for i = 1:PYRE_NO
+    seg = ImageEdgeSeg{i};
+    dif = ImageDifference{i};
+    value1 = seg(find(seg~=0));
+    value2 = dif(find(dif~=0));
+    mask = (seg>median(value1))&(dif>median(value2));
+    CandiateMask{i} = mask;
+end
 
 % windows search size
 winSize = 5;
@@ -66,27 +103,27 @@ for p = PYRE_NO:-1:1
         v = zeros(size( Apyre{p},1),size(Apyre{p},2));
         
     else
-        %at this place, we won't use bilinear interpolation
-        %instead, we should use convoluation to find the similarity
-        
         u = imresize(u,[size(Apyre{p},1),size(Apyre{p},2)],'bilinear')*Ratiopyre{p};
         v = imresize(v,[size(Apyre{p},1),size(Apyre{p},2)],'bilinear')*Ratiopyre{p};
         
         %correct u and v
         A_p_conv = imReflect( Apyre{p}, 2*halfWindow);
         B_p_conv = imReflect(imWarp( u, v, Bpyre{p} ), halfWindow);
+        mask = CandiateMask{p};
         for i = 1:size(Apyre{p},1)
             for j = 1:size(Apyre{p},2)
-                
-                %perform convoluation and search the minimal
-                template = B_p_conv(i:i+halfWindow*2,j:j+halfWindow*2,:);
-                matching = A_p_conv(i:i+2*halfWindow*2,j:j+2*halfWindow*2,:);
-                C = conv2(matching(:,:,1),template(:,:,1),'full')...
-                    +conv2(matching(:,:,2),template(:,:,2),'full')...
-                    +conv2(matching(:,:,3),template(:,:,3),'full');
-                [maxi,maxj] = find(C==max(C(:)),1,'first');
-                u(i,j) = maxi-3*halfWindow;
-                v(i,j) = maxj-3*halfWindow;
+                %add conditions here
+                if(isOnEdge(mask,i,j))
+                    %perform convoluation and search the minimal
+                    template = B_p_conv(i:i+halfWindow*2,j:j+halfWindow*2,:);
+                    matching = A_p_conv(i:i+2*halfWindow*2,j:j+2*halfWindow*2,:);
+                    C = conv2(matching(:,:,1),template(:,:,1),'full')...
+                        +conv2(matching(:,:,2),template(:,:,2),'full')...
+                        +conv2(matching(:,:,3),template(:,:,3),'full');
+                    [maxi,maxj] = find(C==max(C(:)),1,'first');
+                    u(i,j) = maxi-3*halfWindow;
+                    v(i,j) = maxj-3*halfWindow;
+                end
             end
         end
     end
@@ -103,14 +140,14 @@ for p = PYRE_NO:-1:1
         It = A_p_Desaturate - B_ref_Desaturate;
         [us,vs] = LKstep(It, Ix, Iy, H, halfWindow);
         us = us(halfWindow+1:size(us,1)-halfWindow, halfWindow+1:size(us,2)-halfWindow);
-        vs = vs(halfWindow+1:size(vs,1)-halfWindow, halfWindow+1:size(vs,2)-halfWindow);   
+        vs = vs(halfWindow+1:size(vs,1)-halfWindow, halfWindow+1:size(vs,2)-halfWindow);
         u = u + us;
         v = v + vs;
         
         if(sum(sum(us.^2+vs.^2))/size(us,1)*size(us,2)<accThreshold)
             fprintf('Pyramid no: %d, Iteration no: %d\n break',p,k);
             break;
-        end 
+        end
     end
     figure;imshow(B);
     pause;
